@@ -15,14 +15,18 @@ public class PersonalMedico {
     }
 
     public void crear() throws OperacionInvalidaException {
-        if (nombre == null || nombre.isBlank()) {
-            throw new OperacionInvalidaException("El nombre del personal médico no puede estar vacío.");
-        }
-        if (ArchivoUtil.buscarPorId(ARCHIVO, id) != null) {
-            throw new OperacionInvalidaException("Ya existe personal médico con el id " + id);
-        }
-        ArchivoUtil.agregarLinea(ARCHIVO, id + "|" + nombre + "|" + cargo + "|" + especialidad);
+    if (!cargo.equals("MEDICO") && !cargo.equals("ENFERMERA")) {
+        throw new OperacionInvalidaException("El cargo debe ser MEDICO o ENFERMERA, no: " + cargo);
     }
+    if (nombre == null || nombre.isBlank()) {
+        throw new OperacionInvalidaException("El nombre del personal médico no puede estar vacío.");
+    }
+    if (ArchivoUtil.buscarPorId(ARCHIVO, id) != null) {
+        throw new OperacionInvalidaException("Ya existe personal médico con el id " + id);
+    }
+    ArchivoUtil.agregarLinea(ARCHIVO, id + "|" + nombre + "|" + cargo + "|" + especialidad);
+}
+    
 
     public static String buscar(String id) {
         return (String) ArchivoUtil.buscarPorId(ARCHIVO, id);
