@@ -46,4 +46,14 @@ public class Medicamento {
     public static boolean eliminar(String id) {
         return ArchivoUtil.eliminarLinea(ARCHIVO, id);
     }
+
+public static boolean reducirStock(String id, int cantidad) throws OperacionInvalidaException {
+    String linea = ArchivoUtil.buscarPorId(ARCHIVO, id);
+    if (linea == null) throw new OperacionInvalidaException("No existe el medicamento con id " + id);
+    String[] p = linea.split("\\|");
+    int stockActual = Integer.parseInt(p[3]);
+    if (stockActual < cantidad) throw new OperacionInvalidaException("Stock insuficiente de " + p[1]);
+    return ArchivoUtil.actualizarLinea(ARCHIVO, id, id + "|" + p[1] + "|" + p[2] + "|" + (stockActual - cantidad));
 }
+}
+
