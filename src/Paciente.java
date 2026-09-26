@@ -2,6 +2,8 @@
  * Paciente: cubre "CRUD de pacientes" (Crear, Buscar, Modificar, Eliminar).
  * Persistencia en pacientes.txt (id|nombre|apellido|documento|edad).
  */
+import java.util.List;
+import java.util.stream.Collectors;
 public class Paciente {
 
     private static final String ARCHIVO = "pacientes.txt";
@@ -12,6 +14,15 @@ public class Paciente {
     private String documento;
     private int edad;
 
+    public static List<String> listarPacientesMayoresDeEdad() {
+    return ArchivoUtil.leerLineas(ARCHIVO).stream()
+            .filter(linea -> Integer.parseInt(linea.split("\\|")[4]) >= 18)
+            .map(linea -> {
+                String[] p = linea.split("\\|");
+                return p[1] + " " + p[2] + " (edad: " + p[4] + ")";
+            })
+            .collect(Collectors.toList());
+}
     public Paciente(String id, String nombre, String apellido, String documento, int edad) {
         this.id = id;
         this.nombre = nombre;
