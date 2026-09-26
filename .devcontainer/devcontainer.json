@@ -1,1 +1,2 @@
 
+{ "name": "Java", "image": "mcr.microsoft.com/devcontainers/java:17" }
