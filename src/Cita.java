@@ -1,42 +1,36 @@
-/**
- * Cita: cubre "Registro de citas de pacientes". Debe buscar el doctor,
- * medicamento y paciente previamente guardados en sus propios archivos
- * antes de registrar la cita, tal como indicó el docente.
- * Persistencia en citas.txt (id|idPaciente|idMedico|idMedicamento|fecha).
- */
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+
 public class Cita {
 
-    private static final String ARCHIVO = "citas.txt";
+    private static final String ARCHIVO = ArchivoUtil.ruta("citas.txt");
+    private static final List<String> PRIORIDADES_VALIDAS = Arrays.asList("I", "II", "III", "IV", "V");
 
-    private String id;
-    private String idPaciente;
-    private String idMedico;
-    private String idMedicamento;
-    private String fecha;
-
-    public Cita(String id, String idPaciente, String idMedico, String idMedicamento, String fecha) {
-        this.id = id;
-        this.idPaciente = idPaciente;
-        this.idMedico = idMedico;
-        this.idMedicamento = idMedicamento;
-        this.fecha = fecha;
-    }
-
-    /**
-     * Registra la cita solo si el paciente, el médico y el medicamento
-     * ya existen guardados en sus respectivos "blocs de notas".
-     */
-    public void registrar() throws OperacionInvalidaException {
-        if (Paciente.buscar(idPaciente) == null) {
-            throw new OperacionInvalidaException("No se encontró el paciente con id " + idPaciente + ". Regístrelo primero.");
+    public static void crear(String id, String dniPaciente, String idDoctor, String idMedicamento,
+                              String fechaHora, String motivo, String prioridad) throws OperacionInvalidaException {
+        if (id == null || id.isBlank() || dniPaciente == null || dniPaciente.isBlank()) {
+            throw new OperacionInvalidaException("ID de cita y DNI del paciente son obligatorios.");
         }
-        if (PersonalMedico.buscar(idMedico) == null) {
-            throw new OperacionInvalidaException("No se encontró el médico con id " + idMedico + ". Regístrelo primero.");
+        if (ArchivoUtil.existeValor(ARCHIVO, 0, id)) {
+            throw new OperacionInvalidaException("Ese ID de cita ya existe.");
+        }
+        if (!Paciente.existeConDni(dniPaciente)) {
+            throw new OperacionInvalidaException("No existe un paciente con ese DNI. Regístrelo primero.");
+        }
+        if (!PersonalMedico.existeDoctor(idDoctor)) {
+            throw new OperacionInvalidaException("No existe un doctor con ese ID. Regístrelo primero.");
         }
         if (Medicamento.buscar(idMedicamento) == null) {
-            throw new OperacionInvalidaException("No se encontró el medicamento con id " + idMedicamento + ". Regístrelo primero.");
+            throw new OperacionInvalidaException("No existe ese medicamento. Regístrelo primero.");
         }
-        ArchivoUtil.agregarLinea(ARCHIVO, id + "|" + idPaciente + "|" + idMedico + "|" + idMedicamento + "|" + fecha);
+        String prioridadFinal = prioridad == null ? "" : prioridad.toUpperCase();
+        if (!PRIORIDADES_VALIDAS.contains(prioridadFinal)) {
+            throw new OperacionInvalidaException("La prioridad debe ser I, II, III, IV o V.");
+        }
+        ArchivoUtil.agregarLinea(ARCHIVO,
+                ArchivoUtil.unir(id, dniPaciente, idDoctor, idMedicamento, fechaHora, motivo, prioridadFinal));
     }
 
     public static String buscar(String id) {
@@ -45,5 +39,23 @@ public class Cita {
 
     public static boolean eliminar(String id) {
         return ArchivoUtil.eliminarLinea(ARCHIVO, id);
+    }
+
+    public static java.util.List<String[]> listar() {
+        return ArchivoUtil.leerComoFilas(ARCHIVO);
+    }
+
+
+    public static List<String[]> filtrarCasosCriticos() {
+        return listar().stream()
+                .filter(fila -> fila.length == 7 && (fila[6].equals("I") || fila[6].equals("II")))
+                .collect(Collectors.toList());
+    }
+
+
+    public static List<String> generarResumenes() {
+        return listar().stream()
+                .map(f -> "Cita " + f[0] + " | Paciente DNI " + f[1] + " | Prioridad " + f[6])
+                .collect(Collectors.toList());
     }
 }
