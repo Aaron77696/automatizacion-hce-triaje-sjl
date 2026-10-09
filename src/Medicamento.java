@@ -1,3 +1,7 @@
+/**
+ * Medicamento: CRUD de medicamentos.
+ * Archivo: medicamentos.txt -> id|nombre|dosis|stock|descripcion
+ */
 public class Medicamento {
 
     private static final String ARCHIVO = ArchivoUtil.ruta("medicamentos.txt");
@@ -39,6 +43,14 @@ public class Medicamento {
 
     public static java.util.List<String[]> listar() {
         return ArchivoUtil.leerComoFilas(ARCHIVO);
+    }
+
+    /** Medicamentos listos para un menú desplegable: "id - nombre dosis (stock: n)". */
+    public static java.util.List<String> listarParaMenu() {
+        return listar().stream()
+                .filter(f -> f.length == 5)
+                .map(f -> f[0] + " - " + f[1] + " " + f[2] + " (stock: " + f[3] + ")")
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private static int parsearStock(String stock) throws OperacionInvalidaException {
