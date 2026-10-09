@@ -56,8 +56,8 @@ public class PanelCitas extends JPanel {
 
         campo(panel, c, 0, "ID cita:", campoId);
         campo(panel, c, 1, "DNI paciente:", campoDniPaciente);
-        campo(panel, c, 2, "ID doctor:", campoIdDoctor);
-        campo(panel, c, 3, "ID medicamento:", campoIdMedicamento);
+        campo(panel, c, 2, "Doctor (ID o nombre):", campoIdDoctor);
+        campo(panel, c, 3, "Medicamento (ID o nombre):", campoIdMedicamento);
         campo(panel, c, 4, "Fecha/hora:", campoFechaHora);
         campo(panel, c, 5, "Motivo:", campoMotivo);
         campo(panel, c, 6, "Prioridad triaje:", campoPrioridad);

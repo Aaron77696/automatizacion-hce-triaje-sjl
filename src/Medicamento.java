@@ -1,7 +1,3 @@
-/**
- * Medicamento: CRUD de medicamentos.
- * Archivo: medicamentos.txt -> id|nombre|dosis|stock|descripcion
- */
 public class Medicamento {
 
     private static final String ARCHIVO = ArchivoUtil.ruta("medicamentos.txt");
@@ -19,6 +15,11 @@ public class Medicamento {
             throw new OperacionInvalidaException("Ese código ya existe.");
         }
         ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, dosis, String.valueOf(stockNum), descripcion));
+    }
+
+    /** Genera un ID aleatorio con formato Letra+6 dígitos (ej. K482913). */
+    public static String nuevoId() {
+        return GeneradorId.nuevo(ARCHIVO);
     }
 
     public static String buscar(String id) {
@@ -45,19 +46,30 @@ public class Medicamento {
         return ArchivoUtil.leerComoFilas(ARCHIVO);
     }
 
-    /** Medicamentos listos para un menú desplegable: "id - nombre dosis (stock: n)". */
-    public static java.util.List<String> listarParaMenu() {
-        return listar().stream()
-                .filter(f -> f.length == 5)
-                .map(f -> f[0] + " - " + f[1] + " " + f[2] + " (stock: " + f[3] + ")")
-                .collect(java.util.stream.Collectors.toList());
-    }
-
     private static int parsearStock(String stock) throws OperacionInvalidaException {
         try {
             return Integer.parseInt(stock.trim());
         } catch (Exception e) {
             throw new OperacionInvalidaException("El stock debe ser un número entero.");
         }
+    }
+
+    /** Acepta el ID o el nombre de un medicamento y devuelve su ID (o null si no existe). */
+    public static String resolverId(String idONombre) throws OperacionInvalidaException {
+        if (idONombre == null || idONombre.isBlank()) return null;
+        String texto = idONombre.trim();
+        for (String[] d : listar()) {
+            if (d.length == 5 && d[0].equalsIgnoreCase(texto)) return d[0];
+        }
+        String encontrado = null;
+        for (String[] d : listar()) {
+            if (d.length == 5 && d[1].equalsIgnoreCase(texto)) {
+                if (encontrado != null) {
+                    throw new OperacionInvalidaException("Hay varios medicamentos con ese nombre. Use el ID.");
+                }
+                encontrado = d[0];
+            }
+        }
+        return encontrado;
     }
 }

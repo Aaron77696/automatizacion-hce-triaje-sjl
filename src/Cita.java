@@ -19,18 +19,20 @@ public class Cita {
         if (!Paciente.existeConDni(dniPaciente)) {
             throw new OperacionInvalidaException("No existe un paciente con ese DNI. Regístrelo primero.");
         }
-        if (!PersonalMedico.existeDoctor(idDoctor)) {
-            throw new OperacionInvalidaException("No existe un doctor con ese ID. Regístrelo primero.");
+        String idDoctorFinal = PersonalMedico.resolverDoctor(idDoctor);
+        if (idDoctorFinal == null) {
+            throw new OperacionInvalidaException("No existe un doctor con ese ID o nombre. Regístrelo primero.");
         }
-        if (Medicamento.buscar(idMedicamento) == null) {
-            throw new OperacionInvalidaException("No existe ese medicamento. Regístrelo primero.");
+        String idMedicamentoFinal = Medicamento.resolverId(idMedicamento);
+        if (idMedicamentoFinal == null) {
+            throw new OperacionInvalidaException("No existe un medicamento con ese ID o nombre. Regístrelo primero.");
         }
         String prioridadFinal = prioridad == null ? "" : prioridad.toUpperCase();
         if (!PRIORIDADES_VALIDAS.contains(prioridadFinal)) {
             throw new OperacionInvalidaException("La prioridad debe ser I, II, III, IV o V.");
         }
         ArchivoUtil.agregarLinea(ARCHIVO,
-                ArchivoUtil.unir(id, dniPaciente, idDoctor, idMedicamento, fechaHora, motivo, prioridadFinal));
+                ArchivoUtil.unir(id, dniPaciente, idDoctorFinal, idMedicamentoFinal, fechaHora, motivo, prioridadFinal));
     }
 
     public static String buscar(String id) {
@@ -45,7 +47,7 @@ public class Cita {
         return ArchivoUtil.leerComoFilas(ARCHIVO);
     }
 
-    /** Genera un ID aleatorio con formato Letra-6dígitos (ej. K-482913). */
+    /** Genera un ID aleatorio con formato Letra-6dígitos (ej. K482913). */
     public static String nuevoId() {
         return GeneradorId.nuevo(ARCHIVO);
     }

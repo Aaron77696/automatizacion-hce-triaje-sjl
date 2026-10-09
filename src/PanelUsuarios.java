@@ -13,11 +13,21 @@ public class PanelUsuarios extends JPanel {
     private final DefaultTableModel modeloTabla = new DefaultTableModel(
             new Object[]{"ID", "Nombre", "Usuario", "Clave protegida", "Rol"}, 0);
 
+    private final JTable tabla = new JTable(modeloTabla);
+
     public PanelUsuarios() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        campoId.setEditable(false);
+        campoId.setText(Usuario.nuevoId());
         add(construirFormulario(), BorderLayout.NORTH);
-        add(new JScrollPane(new JTable(modeloTabla)), BorderLayout.CENTER);
+        add(new JScrollPane(tabla), BorderLayout.CENTER);
+
+        // Al hacer clic en una fila, se cargan sus datos en el formulario
+        tabla.getSelectionModel().addListSelectionListener(e -> {
+            int fila = tabla.getSelectedRow();
+            if (!e.getValueIsAdjusting() && fila >= 0) cargarFila(fila);
+        });
         actualizarTabla();
         Tema.aplicar(this);
     }
@@ -89,9 +99,19 @@ public class PanelUsuarios extends JPanel {
     }
 
     private void limpiarCampos() {
-        campoId.setText(""); campoNombre.setText(""); campoUsuario.setText("");
+        campoId.setText(Usuario.nuevoId()); campoNombre.setText(""); campoUsuario.setText("");
         campoClave.setText(""); campoRol.setSelectedIndex(0);
     }
+
+    private void cargarFila(int f) {
+        campoId.setText(valor(f, 0));
+        campoNombre.setText(valor(f, 1));
+        campoUsuario.setText(valor(f, 2));
+        campoClave.setText(""); // vacía = no cambiar la contraseña al modificar
+        campoRol.setSelectedItem(valor(f, 4));
+    }
+
+    private String valor(int f, int c) { return String.valueOf(modeloTabla.getValueAt(f, c)); }
 
     private void exito(String msg) { etiquetaEstado.setForeground(new Color(0, 110, 0)); etiquetaEstado.setText(msg); }
     private void error(String msg) { etiquetaEstado.setForeground(Color.RED); etiquetaEstado.setText(msg); }

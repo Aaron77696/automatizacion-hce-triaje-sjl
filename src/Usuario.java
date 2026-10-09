@@ -12,10 +12,18 @@ public class Usuario {
                 || usuario == null || usuario.isBlank() || claveTexto == null || claveTexto.isBlank()) {
             throw new OperacionInvalidaException("Todos los campos son obligatorios.");
         }
+        if (ArchivoUtil.existeValor(ARCHIVO, 0, id)) {
+            throw new OperacionInvalidaException("Ese ID ya existe.");
+        }
         if (ArchivoUtil.existeValor(ARCHIVO, 2, usuario)) {
             throw new OperacionInvalidaException("Ese nombre de usuario ya existe.");
         }
         ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, usuario, hash(claveTexto), rol.toUpperCase()));
+    }
+
+    /** Genera un ID aleatorio con formato Letra+6 dígitos (ej. K482913). */
+    public static String nuevoId() {
+        return GeneradorId.nuevo(ARCHIVO);
     }
 
     public static String buscar(String idOUsuario) {

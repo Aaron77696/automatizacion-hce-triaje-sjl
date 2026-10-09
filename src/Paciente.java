@@ -9,10 +9,18 @@ public class Paciente {
                 || apellido == null || apellido.isBlank() || dni == null || dni.isBlank()) {
             throw new OperacionInvalidaException("ID, nombres, apellidos y DNI son obligatorios.");
         }
+        if (ArchivoUtil.existeValor(ARCHIVO, 0, id)) {
+            throw new OperacionInvalidaException("Ese ID ya existe.");
+        }
         if (ArchivoUtil.existeValor(ARCHIVO, 3, dni)) {
             throw new OperacionInvalidaException("Ese DNI ya está registrado.");
         }
         ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, apellido, dni, fechaNacimiento, telefono, direccion));
+    }
+
+    /** Genera un ID aleatorio con formato Letra+6 dígitos (ej. K482913). */
+    public static String nuevoId() {
+        return GeneradorId.nuevo(ARCHIVO);
     }
 
     public static String buscar(String idODni) {

@@ -1,7 +1,3 @@
-/**
- * PersonalMedico: CRUD de doctores/enfermeras.
- * Archivo: personal_medico.txt -> id|nombre|dni|tipo|especialidad|telefono
- */
 public class PersonalMedico {
 
     private static final String ARCHIVO = ArchivoUtil.ruta("personal_medico.txt");
@@ -14,10 +10,18 @@ public class PersonalMedico {
         if (!tipo.equalsIgnoreCase("DOCTOR") && !tipo.equalsIgnoreCase("ENFERMERA") && !tipo.equalsIgnoreCase("OTRO")) {
             throw new OperacionInvalidaException("El tipo debe ser DOCTOR, ENFERMERA u OTRO.");
         }
+        if (ArchivoUtil.existeValor(ARCHIVO, 0, id)) {
+            throw new OperacionInvalidaException("Ese ID ya existe.");
+        }
         if (ArchivoUtil.existeValor(ARCHIVO, 2, dni)) {
             throw new OperacionInvalidaException("Ese DNI ya está registrado.");
         }
         ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, dni, tipo.toUpperCase(), especialidad, telefono));
+    }
+
+    /** Genera un ID aleatorio con formato Letra+6 dígitos (ej. K482913). */
+    public static String nuevoId() {
+        return GeneradorId.nuevo(ARCHIVO);
     }
 
     public static String buscar(String id) {
@@ -41,21 +45,29 @@ public class PersonalMedico {
         return ArchivoUtil.leerComoFilas(ARCHIVO);
     }
 
-    /**
-     * Doctores listos para un menú desplegable: "id - nombre (especialidad)".
-     * Usa filter (solo DOCTOR, sin enfermeras) y map (arma el texto).
-     */
-    public static java.util.List<String> listarDoctoresParaMenu() {
-        return listar().stream()
-                .filter(f -> f.length == 6 && f[3].equalsIgnoreCase("DOCTOR"))
-                .map(f -> f[0] + " - " + f[1] + " (" + f[4] + ")")
-                .collect(java.util.stream.Collectors.toList());
-    }
-
     public static boolean existeDoctor(String id) {
         String l = buscar(id);
         if (l == null) return false;
         String[] d = l.split("\\|", -1);
         return d.length == 6 && d[3].equalsIgnoreCase("DOCTOR");
+    }
+
+    /** Acepta el ID o el nombre de un doctor y devuelve su ID (o null si no existe). */
+    public static String resolverDoctor(String idONombre) throws OperacionInvalidaException {
+        if (idONombre == null || idONombre.isBlank()) return null;
+        String texto = idONombre.trim();
+        for (String[] d : listar()) {
+            if (d.length == 6 && d[3].equalsIgnoreCase("DOCTOR") && d[0].equalsIgnoreCase(texto)) return d[0];
+        }
+        String encontrado = null;
+        for (String[] d : listar()) {
+            if (d.length == 6 && d[3].equalsIgnoreCase("DOCTOR") && d[1].equalsIgnoreCase(texto)) {
+                if (encontrado != null) {
+                    throw new OperacionInvalidaException("Hay varios doctores con ese nombre. Use el ID.");
+                }
+                encontrado = d[0];
+            }
+        }
+        return encontrado;
     }
 }
