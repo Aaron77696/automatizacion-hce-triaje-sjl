@@ -1,33 +1,50 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-/** PanelCitas: formulario real para registrar citas (con botón que usa la función de orden superior filter). */
+
 public class PanelCitas extends JPanel {
+
+    private static final String FORMATO_FECHA = "dd/MM/yyyy HH:mm";
 
     private final JTextField campoId = new JTextField(8);
     private final JTextField campoDniPaciente = new JTextField(10);
-    private final JComboBox<String> campoDoctor = new JComboBox<>();
-    private final JComboBox<String> campoMedicamento = new JComboBox<>();
-    private final JTextField campoFechaHora = new JTextField(14);
+    private final JTextField campoIdDoctor = new JTextField(8);
+    private final JTextField campoIdMedicamento = new JTextField(8);
+    private final JSpinner campoFechaHora = crearSelectorFecha();
     private final JTextField campoMotivo = new JTextField(16);
     private final JComboBox<String> campoPrioridad = new JComboBox<>(new String[]{"I", "II", "III", "IV", "V"});
     private final JLabel etiquetaEstado = new JLabel(" ");
     private final DefaultTableModel modeloTabla = new DefaultTableModel(
             new Object[]{"ID", "DNI Paciente", "ID Doctor", "ID Medicamento", "Fecha/Hora", "Motivo", "Prioridad"}, 0);
+    private final JTable tabla = new JTable(modeloTabla);
 
     public PanelCitas() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        campoId.setEditable(false);
+        campoId.setText(Cita.nuevoId());
         add(construirFormulario(), BorderLayout.NORTH);
-        add(new JScrollPane(new JTable(modeloTabla)), BorderLayout.CENTER);
-        recargarOpciones();
+        add(new JScrollPane(tabla), BorderLayout.CENTER);
+
+        // Al hacer clic en una fila, se carga su ID (para poder eliminar)
+        tabla.getSelectionModel().addListSelectionListener(e -> {
+            int fila = tabla.getSelectedRow();
+            if (!e.getValueIsAdjusting() && fila >= 0) {
+                campoId.setText((String) modeloTabla.getValueAt(fila, 0));
+            }
+        });
+
         actualizarTabla();
         Tema.aplicar(this);
-        // Cada vez que se abre esta pantalla, los menús se actualizan con lo último registrado
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override public void componentShown(java.awt.event.ComponentEvent e) { recargarOpciones(); }
-        });
+    }
+
+    private static JSpinner crearSelectorFecha() {
+        JSpinner spinner = new JSpinner(new SpinnerDateModel(new Date(), null, null, java.util.Calendar.MINUTE));
+        spinner.setEditor(new JSpinner.DateEditor(spinner, FORMATO_FECHA));
+        return spinner;
     }
 
     private JPanel construirFormulario() {
@@ -39,8 +56,8 @@ public class PanelCitas extends JPanel {
 
         campo(panel, c, 0, "ID cita:", campoId);
         campo(panel, c, 1, "DNI paciente:", campoDniPaciente);
-        campo(panel, c, 2, "Doctor:", campoDoctor);
-        campo(panel, c, 3, "Medicamento:", campoMedicamento);
+        campo(panel, c, 2, "ID doctor:", campoIdDoctor);
+        campo(panel, c, 3, "ID medicamento:", campoIdMedicamento);
         campo(panel, c, 4, "Fecha/hora:", campoFechaHora);
         campo(panel, c, 5, "Motivo:", campoMotivo);
         campo(panel, c, 6, "Prioridad triaje:", campoPrioridad);
@@ -71,11 +88,10 @@ public class PanelCitas extends JPanel {
     }
 
     private void registrar() {
-        if (campoDoctor.getSelectedItem() == null) { error("Primero registre al menos un doctor en 'Personal médico'."); return; }
-        if (campoMedicamento.getSelectedItem() == null) { error("Primero registre al menos un medicamento."); return; }
         try {
-            Cita.crear(campoId.getText().trim(), campoDniPaciente.getText().trim(), idSeleccionado(campoDoctor),
-                    idSeleccionado(campoMedicamento), campoFechaHora.getText().trim(), campoMotivo.getText().trim(),
+            String fechaHora = new SimpleDateFormat(FORMATO_FECHA).format((Date) campoFechaHora.getValue());
+            Cita.crear(campoId.getText().trim(), campoDniPaciente.getText().trim(), campoIdDoctor.getText().trim(),
+                    campoIdMedicamento.getText().trim(), fechaHora, campoMotivo.getText().trim(),
                     (String) campoPrioridad.getSelectedItem());
             exito("Cita registrada correctamente."); limpiarCampos(); actualizarTabla();
         } catch (OperacionInvalidaException ex) { error(ex.getMessage()); }
@@ -83,7 +99,7 @@ public class PanelCitas extends JPanel {
 
     private void eliminar() {
         if (Cita.eliminar(campoId.getText().trim())) { exito("Cita eliminada."); limpiarCampos(); actualizarTabla(); }
-        else error("No se encontró la cita.");
+        else error("Seleccione una cita de la tabla para eliminarla.");
     }
 
     /** Usa la función de orden superior filter() de la clase Cita. */
@@ -99,25 +115,11 @@ public class PanelCitas extends JPanel {
     }
 
     private void limpiarCampos() {
-        campoId.setText(""); campoDniPaciente.setText("");
-        campoFechaHora.setText(""); campoMotivo.setText("");
+        campoId.setText(Cita.nuevoId());
+        campoDniPaciente.setText(""); campoIdDoctor.setText("");
+        campoIdMedicamento.setText(""); campoMotivo.setText("");
+        campoFechaHora.setValue(new Date());
         campoPrioridad.setSelectedIndex(0);
-        if (campoDoctor.getItemCount() > 0) campoDoctor.setSelectedIndex(0);
-        if (campoMedicamento.getItemCount() > 0) campoMedicamento.setSelectedIndex(0);
-    }
-
-    /** Vuelve a cargar los menús con los doctores y medicamentos guardados hasta ahora. */
-    private void recargarOpciones() {
-        campoDoctor.removeAllItems();
-        for (String d : PersonalMedico.listarDoctoresParaMenu()) campoDoctor.addItem(d);
-        campoMedicamento.removeAllItems();
-        for (String m : Medicamento.listarParaMenu()) campoMedicamento.addItem(m);
-    }
-
-    /** De un texto como "1 - Dra. Fernández (...)" devuelve solo el id ("1"). */
-    private String idSeleccionado(JComboBox<String> combo) {
-        String texto = (String) combo.getSelectedItem();
-        return texto == null ? "" : texto.split(" - ", 2)[0].trim();
     }
 
     private void exito(String msg) { etiquetaEstado.setForeground(new Color(0, 110, 0)); etiquetaEstado.setText(msg); }
