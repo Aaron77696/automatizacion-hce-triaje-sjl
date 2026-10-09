@@ -1,2 +1,8 @@
-
-{ "name": "Java", "image": "mcr.microsoft.com/devcontainers/java:17" }
+{
+  "name": "Java",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080]
+}
