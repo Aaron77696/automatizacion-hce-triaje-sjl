@@ -1,78 +1,61 @@
+/**
+ * PersonalMedico: CRUD de doctores/enfermeras.
+ * Archivo: personal_medico.txt -> id|nombre|dni|tipo|especialidad|telefono
+ */
 public class PersonalMedico {
 
-    private static final String ARCHIVO = "personal_medico.txt";
+    private static final String ARCHIVO = ArchivoUtil.ruta("personal_medico.txt");
 
-    private String id;
-    private String nombre;
-    private String cargo; // "MEDICO" o "ENFERMERA"
-    private String especialidad;
-
-    public PersonalMedico(String id, String nombre, String cargo, String especialidad) {
-        this.id = id;
-        this.nombre = nombre;
-        this.cargo = cargo;
-        this.especialidad = especialidad;
+    public static void crear(String id, String nombre, String dni, String tipo, String especialidad, String telefono)
+            throws OperacionInvalidaException {
+        if (id == null || id.isBlank() || nombre == null || nombre.isBlank() || dni == null || dni.isBlank()) {
+            throw new OperacionInvalidaException("ID, nombre y DNI son obligatorios.");
+        }
+        if (!tipo.equalsIgnoreCase("DOCTOR") && !tipo.equalsIgnoreCase("ENFERMERA") && !tipo.equalsIgnoreCase("OTRO")) {
+            throw new OperacionInvalidaException("El tipo debe ser DOCTOR, ENFERMERA u OTRO.");
+        }
+        if (ArchivoUtil.existeValor(ARCHIVO, 2, dni)) {
+            throw new OperacionInvalidaException("Ese DNI ya está registrado.");
+        }
+        ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, dni, tipo.toUpperCase(), especialidad, telefono));
     }
-
-    public void crear() throws OperacionInvalidaException {
-    if (!cargo.equals("MEDICO") && !cargo.equals("ENFERMERA")) {
-        throw new OperacionInvalidaException("El cargo debe ser MEDICO o ENFERMERA, no: " + cargo);
-    }
-    if (nombre == null || nombre.isBlank()) {
-        throw new OperacionInvalidaException("El nombre del personal médico no puede estar vacío.");
-    }
-    if (ArchivoUtil.buscarPorId(ARCHIVO, id) != null) {
-        throw new OperacionInvalidaException("Ya existe personal médico con el id " + id);
-    }
-    ArchivoUtil.agregarLinea(ARCHIVO, id + "|" + nombre + "|" + cargo + "|" + especialidad);
-}
-    
 
     public static String buscar(String id) {
-        return (String) ArchivoUtil.buscarPorId(ARCHIVO, id);
+        return ArchivoUtil.buscarPorId(ARCHIVO, id);
     }
 
-    public static boolean modificar(String id, String nuevoNombre, String nuevoCargo, String nuevaEspecialidad)
+    public static boolean modificar(String id, String nombre, String dni, String tipo, String especialidad, String telefono)
             throws OperacionInvalidaException {
         if (ArchivoUtil.buscarPorId(ARCHIVO, id) == null) {
             throw new OperacionInvalidaException("No existe personal médico con id " + id);
         }
-        return ArchivoUtil.actualizarLinea(ARCHIVO, id, id + "|" + nuevoNombre + "|" + nuevoCargo + "|" + nuevaEspecialidad);
+        return ArchivoUtil.actualizarLinea(ARCHIVO, id,
+                ArchivoUtil.unir(id, nombre, dni, tipo.toUpperCase(), especialidad, telefono));
     }
 
     public static boolean eliminar(String id) {
         return ArchivoUtil.eliminarLinea(ARCHIVO, id);
     }
 
-    private static class OperacionInvalidaException extends Exception {
-
-        public OperacionInvalidaException() {
-        }
-
-        private OperacionInvalidaException(String el_nombre_del_personal_médico_no_puede_es) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
+    public static java.util.List<String[]> listar() {
+        return ArchivoUtil.leerComoFilas(ARCHIVO);
     }
 
-    private static class ArchivoUtil {
+    /**
+     * Doctores listos para un menú desplegable: "id - nombre (especialidad)".
+     * Usa filter (solo DOCTOR, sin enfermeras) y map (arma el texto).
+     */
+    public static java.util.List<String> listarDoctoresParaMenu() {
+        return listar().stream()
+                .filter(f -> f.length == 6 && f[3].equalsIgnoreCase("DOCTOR"))
+                .map(f -> f[0] + " - " + f[1] + " (" + f[4] + ")")
+                .collect(java.util.stream.Collectors.toList());
+    }
 
-        private static Object buscarPorId(String ARCHIVO, String id) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
-        private static void agregarLinea(String ARCHIVO, String string) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
-        private static boolean actualizarLinea(String ARCHIVO, String id, String string) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
-        private static boolean eliminarLinea(String ARCHIVO, String id) {
-            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-        }
-
-        public ArchivoUtil() {
-        }
+    public static boolean existeDoctor(String id) {
+        String l = buscar(id);
+        if (l == null) return false;
+        String[] d = l.split("\\|", -1);
+        return d.length == 6 && d[3].equalsIgnoreCase("DOCTOR");
     }
 }
