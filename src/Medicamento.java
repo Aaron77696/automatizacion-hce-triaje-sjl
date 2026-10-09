@@ -1,59 +1,51 @@
-/**
- * Medicamento: cubre "CRUD de medicamentos".
- * Persistencia en medicamentos.txt (id|nombre|dosis|stock).
- */
 public class Medicamento {
 
-    private static final String ARCHIVO = "medicamentos.txt";
+    private static final String ARCHIVO = ArchivoUtil.ruta("medicamentos.txt");
 
-    private String id;
-    private String nombre;
-    private String dosis;
-    private int stock;
-
-    public Medicamento(String id, String nombre, String dosis, int stock) {
-        this.id = id;
-        this.nombre = nombre;
-        this.dosis = dosis;
-        this.stock = stock;
-    }
-
-    public void crear() throws OperacionInvalidaException {
-        if (nombre == null || nombre.isBlank()) {
-            throw new OperacionInvalidaException("El nombre del medicamento no puede estar vacío.");
+    public static void crear(String id, String nombre, String dosis, String stock, String descripcion)
+            throws OperacionInvalidaException {
+        if (id == null || id.isBlank() || nombre == null || nombre.isBlank()) {
+            throw new OperacionInvalidaException("ID y nombre son obligatorios.");
         }
-        if (stock < 0) {
+        int stockNum = parsearStock(stock);
+        if (stockNum < 0) {
             throw new OperacionInvalidaException("El stock no puede ser negativo.");
         }
-        if (ArchivoUtil.buscarPorId(ARCHIVO, id) != null) {
-            throw new OperacionInvalidaException("Ya existe un medicamento con el id " + id);
+        if (ArchivoUtil.existeValor(ARCHIVO, 0, id)) {
+            throw new OperacionInvalidaException("Ese código ya existe.");
         }
-        ArchivoUtil.agregarLinea(ARCHIVO, id + "|" + nombre + "|" + dosis + "|" + stock);
+        ArchivoUtil.agregarLinea(ARCHIVO, ArchivoUtil.unir(id, nombre, dosis, String.valueOf(stockNum), descripcion));
     }
 
     public static String buscar(String id) {
         return ArchivoUtil.buscarPorId(ARCHIVO, id);
     }
 
-    public static boolean modificar(String id, String nuevoNombre, String nuevaDosis, int nuevoStock)
+    public static boolean modificar(String id, String nombre, String dosis, String stock, String descripcion)
             throws OperacionInvalidaException {
         if (ArchivoUtil.buscarPorId(ARCHIVO, id) == null) {
             throw new OperacionInvalidaException("No existe medicamento con id " + id);
         }
-        return ArchivoUtil.actualizarLinea(ARCHIVO, id, id + "|" + nuevoNombre + "|" + nuevaDosis + "|" + nuevoStock);
+        int stockNum = parsearStock(stock);
+        if (stockNum < 0) {
+            throw new OperacionInvalidaException("El stock no puede ser negativo.");
+        }
+        return ArchivoUtil.actualizarLinea(ARCHIVO, id, ArchivoUtil.unir(id, nombre, dosis, String.valueOf(stockNum), descripcion));
     }
 
     public static boolean eliminar(String id) {
         return ArchivoUtil.eliminarLinea(ARCHIVO, id);
     }
 
-public static boolean reducirStock(String id, int cantidad) throws OperacionInvalidaException {
-    String linea = ArchivoUtil.buscarPorId(ARCHIVO, id);
-    if (linea == null) throw new OperacionInvalidaException("No existe el medicamento con id " + id);
-    String[] p = linea.split("\\|");
-    int stockActual = Integer.parseInt(p[3]);
-    if (stockActual < cantidad) throw new OperacionInvalidaException("Stock insuficiente de " + p[1]);
-    return ArchivoUtil.actualizarLinea(ARCHIVO, id, id + "|" + p[1] + "|" + p[2] + "|" + (stockActual - cantidad));
-}
-}
+    public static java.util.List<String[]> listar() {
+        return ArchivoUtil.leerComoFilas(ARCHIVO);
+    }
 
+    private static int parsearStock(String stock) throws OperacionInvalidaException {
+        try {
+            return Integer.parseInt(stock.trim());
+        } catch (Exception e) {
+            throw new OperacionInvalidaException("El stock debe ser un número entero.");
+        }
+    }
+}
