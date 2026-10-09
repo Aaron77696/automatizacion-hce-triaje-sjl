@@ -45,6 +45,11 @@ public class Cita {
         return ArchivoUtil.leerComoFilas(ARCHIVO);
     }
 
+    /** Genera un ID aleatorio con formato Letra-6dígitos (ej. K-482913). */
+    public static String nuevoId() {
+        return GeneradorId.nuevo(ARCHIVO);
+    }
+
 
     public static List<String[]> filtrarCasosCriticos() {
         return listar().stream()
