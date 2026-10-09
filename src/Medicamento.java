@@ -54,12 +54,22 @@ public class Medicamento {
         }
     }
 
+    /** Medicamentos con formato "ID - Nombre", para usar en menús desplegables. */
+    public static java.util.List<String> listarParaMenu() {
+        java.util.List<String> items = new java.util.ArrayList<>();
+        for (String[] d : listar()) {
+            if (d.length == 5) items.add(d[0] + " - " + d[1]);
+        }
+        return items;
+    }
+
     /** Acepta el ID o el nombre de un medicamento y devuelve su ID (o null si no existe). */
     public static String resolverId(String idONombre) throws OperacionInvalidaException {
         if (idONombre == null || idONombre.isBlank()) return null;
         String texto = idONombre.trim();
+        String prefijo = texto.contains(" - ") ? texto.substring(0, texto.indexOf(" - ")).trim() : texto; // formato "ID - Nombre"
         for (String[] d : listar()) {
-            if (d.length == 5 && d[0].equalsIgnoreCase(texto)) return d[0];
+            if (d.length == 5 && (d[0].equalsIgnoreCase(texto) || d[0].equalsIgnoreCase(prefijo))) return d[0];
         }
         String encontrado = null;
         for (String[] d : listar()) {

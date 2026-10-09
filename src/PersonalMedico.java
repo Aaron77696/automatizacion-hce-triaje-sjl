@@ -52,12 +52,23 @@ public class PersonalMedico {
         return d.length == 6 && d[3].equalsIgnoreCase("DOCTOR");
     }
 
+    /** Solo doctores (sin enfermeras), con formato "ID - Nombre", para usar en menús desplegables. */
+    public static java.util.List<String> listarDoctoresParaMenu() {
+        java.util.List<String> items = new java.util.ArrayList<>();
+        for (String[] d : listar()) {
+            if (d.length == 6 && d[3].equalsIgnoreCase("DOCTOR")) items.add(d[0] + " - " + d[1]);
+        }
+        return items;
+    }
+
     /** Acepta el ID o el nombre de un doctor y devuelve su ID (o null si no existe). */
     public static String resolverDoctor(String idONombre) throws OperacionInvalidaException {
         if (idONombre == null || idONombre.isBlank()) return null;
         String texto = idONombre.trim();
+        String prefijo = texto.contains(" - ") ? texto.substring(0, texto.indexOf(" - ")).trim() : texto; // formato "ID - Nombre"
         for (String[] d : listar()) {
-            if (d.length == 6 && d[3].equalsIgnoreCase("DOCTOR") && d[0].equalsIgnoreCase(texto)) return d[0];
+            if (d.length == 6 && d[3].equalsIgnoreCase("DOCTOR")
+                    && (d[0].equalsIgnoreCase(texto) || d[0].equalsIgnoreCase(prefijo))) return d[0];
         }
         String encontrado = null;
         for (String[] d : listar()) {
